@@ -27,10 +27,10 @@ The system operates in two modes:
 
 ### Why Not Use Large LLM Alone?
 
-| Approach | Speed | Cost | Connectivity | Thai Support |
-|----------|-------|------|--------------|--------------|
-| **GPT-4 / Claude** | Slow (2-3s) | Expensive (API cost) | Requires Internet | Not specialized |
-| **BERT + SLM** | Fast (~1.7s total) | Free (on-premise) | Works offline | Fine-tuned specialized |
+| Approach | Speed | Cost | Connectivity | Privacy |
+|----------|-------|------|--------------|---------|
+| **GPT-4 / Claude** | Slow (depends on Latency 3-30s) | Expensive (API cost) | Requires Internet | Have to send to server |
+| **BERT + SLM** | Fast (~1.7s total) | Free (on-premise) | Works offline | Only in local |
 
 Large LLMs are powerful but impractical for real-time on-device detection. Our hybrid approach combines the speed of BERT for pattern detection with the reasoning capability of a Small Language Model (SLM) for generating human-readable explanations—all running locally without API costs or internet dependency.
 
