@@ -23,13 +23,19 @@ async def startup_event():
     from app.config import PITCH_ONLY
     
     if PITCH_ONLY:
-        print("🎬 PITCH ONLY MODE - Skipping AI model loading for fast startup")
-        print("📊 Pitch page available at: http://localhost:8000")
-        print("⚠️  Demo page will NOT work in this mode")
+        print("PITCH ONLY MODE - Skipping AI model loading for fast startup")
+        print("Pitch page available at: http://localhost:8000")
+        print("Demo page will NOT work in this mode")
         return
     
     try:
+        from app.models import get_models
         from app.pipeline_hybrid import precompute_audio
+        
+        # Pre-load AI models explicitly
+        await run_in_threadpool(get_models)
+        
+        # Pre-compute audio diarization cache
         audio_path = "static/audio/scam_bank.wav"
         await run_in_threadpool(precompute_audio, audio_path)
     except Exception as e:
