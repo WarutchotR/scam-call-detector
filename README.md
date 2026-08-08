@@ -1,14 +1,14 @@
-> ## 🌐 **[Live Demo Available Here!](https://stoloniferous-zinciferous-trula.ngrok-free.dev/)**
+> ## **[Live Demo Available Here!](https://stoloniferous-zinciferous-trula.ngrok-free.dev/)**
 
-# 🛡️ Scam Call Detector
+# Scam Call Detector
 
 An AI-powered real-time scam call detection system using Hybrid AI Pipeline (ASR + BERT + SLM).
 
-## � The Real-World Problem
+## The Real-World Problem
 
 Call center scam gangs are a growing threat in Thailand, impersonating trusted authorities such as banks, cyber police, and government officials. These fraudsters use psychological manipulation techniques to create a sense of urgency, pressuring victims into making hasty and costly decisions. In 2025 alone, over **20 thousand victims** were affected, resulting in total damages exceeding **฿22 billion**. This alarming trend underscores the urgent need for AI-powered real-time detection to protect users before they fall victim.
 
-## 📊 System Architecture
+## System Architecture
 
 ![System Flow](static/flow/Local+Agent3.png)
 
@@ -16,7 +16,7 @@ The system operates in two modes:
 - **Local Mode**: All AI models run on-device for privacy-first detection
 - **Agent Mode**: Cloud-based AI Agent with RAG and external search for enhanced accuracy
 
-### 🔄 How It Works
+### How It Works
 
 1. **Audio Input** → The system captures the caller's voice from the phone speaker
 2. **Voice Activity Detection** → Silero VAD segments the audio stream, detecting speech vs. silence
@@ -25,22 +25,22 @@ The system operates in two modes:
 5. **Alert Trigger** → If "SCAM" is detected **3 times**, Qwen3-1.7B generates a persuasive warning
 6. **User Notification** → The system alerts the user with an explanation before they become a victim
 
-### 🤔 Why Not Use Large LLM Alone?
+### Why Not Use Large LLM Alone?
 
 | Approach | Speed | Cost | Connectivity | Thai Support |
 |----------|-------|------|--------------|--------------|
-| **GPT-4 / Claude** ❌ | Slow (2-3s) | Expensive (API cost) | Requires Internet | Not specialized |
-| **BERT + SLM** ✅ | Fast (~1.7s total) | Free (on-premise) | Works offline | Fine-tuned specialized |
+| **GPT-4 / Claude** | Slow (2-3s) | Expensive (API cost) | Requires Internet | Not specialized |
+| **BERT + SLM** | Fast (~1.7s total) | Free (on-premise) | Works offline | Fine-tuned specialized |
 
 Large LLMs are powerful but impractical for real-time on-device detection. Our hybrid approach combines the speed of BERT for pattern detection with the reasoning capability of a Small Language Model (SLM) for generating human-readable explanations—all running locally without API costs or internet dependency.
 
-## 📋 Prerequisites
+## Prerequisites
 
 - Python 3.9+
 - GPU with CUDA support (for Production mode)
 - [Ollama](https://ollama.ai/) (for SLM)
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 scam-call-detector/
@@ -68,7 +68,7 @@ scam-call-detector/
 └── README.md
 ```
 
-## 🚀 Getting Started
+## Getting Started
 
 ### 1. Install Dependencies
 ```bash
@@ -106,7 +106,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ### 6. Open in Browser
 Navigate to `http://localhost:8000`
 
-## ✨ Features
+## Features
 
 - **Dark Theme UI** - Modern, clean design
 - **Real-time WebSocket** - Background processing with live updates
@@ -115,7 +115,7 @@ Navigate to `http://localhost:8000`
 - **Hybrid Detection** - BERT pattern detection + SLM reasoning
 - **Privacy-First** - On-device AI processing option
 
-## 🔧 AI Models Used
+## AI Models Used
 
 | Model | Purpose | Size |
 |-------|---------|------|
@@ -124,7 +124,7 @@ Navigate to `http://localhost:8000`
 | **WangchanBERTa** | Caller Identification & Scam Detection | 0.1B (Quantized) |
 | **Qwen3-1.7B** | Explanation Generator | 1.7B |
 
-## 📈 Performance Metrics
+## Performance Metrics
 
 Tested on 274 rows of new scam patterns (Jan 5, 2026):
 
@@ -135,24 +135,24 @@ Tested on 274 rows of new scam patterns (Jan 5, 2026):
 | Recall | 82% |
 | F1-Score | 83% |
 
-## 🔒 Privacy
+## Privacy
 
 - All models can run locally on-device
 - No audio data is sent to external servers
 - NER masking for cloud mode to protect personal information
 - PDPA compliant
 
-## 📝 Notes
+## Notes
 
 - **GPU** required for loading real models
 - **Ollama** required for Qwen SLM
 - Mock Mode uses simulated data for demo purposes
 - Web demo uses audio file input instead of live microphone
 
-## 👥 Contributors
+## Contributors
 
 - [GitHub Repository](https://github.com/suwapatsuw3/scam-call-detector)
 
 ## 📄 License
 
-Built with ❤️ for KBTG Hackathon 2026
+Built for KBTG Hackathon 2026
