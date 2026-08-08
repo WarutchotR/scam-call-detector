@@ -153,6 +153,6 @@ Tested on 274 rows of new scam patterns (Jan 5, 2026):
 
 - [GitHub Repository](https://github.com/suwapatsuw3/scam-call-detector)
 
-## 📄 License
+## License
 
 Built for KBTG Hackathon 2026
