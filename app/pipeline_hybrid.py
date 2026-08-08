@@ -3,89 +3,42 @@ import librosa
 import numpy as np
 import time
 import os
+import logging
+from langchain_core.prompts import PromptTemplate
 from app.config import SAMPLE_RATE, DEVICE, HF_TOKEN
+from app.models import get_models
+
+logger = logging.getLogger("scam_detector.pipeline")
 
 class HybridPipeline:
-    def __init__(self):
-        self._load_diarization()
-        self._load_asr()
-        self._load_scam_detector()
-        self._load_explainer()
-        self.reset_state()
-        
-        # Cache for pre-computed diarization
-        self.diarization_cache = {}
-        
-        print("Hybrid Pipeline Ready!")
-    
-    def _load_diarization(self):
-        print("   - Loading Pyannote Diarization...")
-        from pyannote.audio import Pipeline
-        self.diarization = Pipeline.from_pretrained(
-            "pyannote/speaker-diarization-3.1", 
-            token=HF_TOKEN
-        ).to(torch.device(DEVICE))
-    
-    def _load_asr(self):
-        print("   - Loading Whisper TH...")
-        from transformers import pipeline as hf_pipeline
-        self.asr = hf_pipeline(
-            "automatic-speech-recognition", 
-            model="biodatlab/distill-whisper-th-small",
-            device=0 if DEVICE == "cuda" else -1
-        )
-        self.asr.model.config.forced_decoder_ids = self.asr.tokenizer.get_decoder_prompt_ids(
-            language="th", task="transcribe"
-        )
-    
-    def _load_scam_detector(self):
-        from transformers import pipeline as hf_pipeline, AutoTokenizer
-        from app.config import MODEL_PATHS
-        
-        tokenizer = AutoTokenizer.from_pretrained(MODEL_PATHS["SCAM_DETECTOR"], use_fast=False)
-        self.scam_classifier = hf_pipeline(
-            "text-classification",
-            model=MODEL_PATHS["SCAM_DETECTOR"],
-            tokenizer=tokenizer,
-            device=DEVICE
-        )
-    
-    def _load_explainer(self):
+    def __init__(self) -> None:
+        self.models = get_models()
 
-        from langchain_ollama import ChatOllama
-        from langchain_core.prompts import ChatPromptTemplate
-        from app.config import AGENT_CONFIG
-        
-        self.explainer_slm = ChatOllama(
-            model=AGENT_CONFIG["OLLAMA_MODEL"],
-            temperature=0.3,
-            base_url="http://127.0.0.1:11434",
-        )
-        
-        self.explain_prompt = ChatPromptTemplate.from_messages([
-            ("system", "หน้าที่ของคุณคือระบบแจ้งเตือนความปลอดภัย"),
-            ("user", """วิเคราะห์ข้อความต่อไปนี้ แล้วอธิบายสั้นๆ ว่า "ทำไมถึงเป็นมิจฉาชีพ?"
-            ตอบเป็นภาษาไทย ความยาวไม่เกิน 2 บรรทัด
-            ข้อความ: "{context}"
-            คำอธิบาย:""")
-        ])
+        self.diarization = self.models.diarization
+        self.asr = self.models.asr
+        self.scam_classifier = self.models.scam_classifier
+        self.explainer_slm = self.models.explainer_slm
+
+        self._setup_prompts()
+        self.reset_state()
+        self.diarization_cache = {}
         
         # Prompt for warning and advice (when SCAM detected 3 times)
         self.warning_prompt = ChatPromptTemplate.from_messages([
             ("system", """คุณคือผู้ช่วย AI ที่ช่วยปกป้องผู้ใช้จากมิจฉาชีพทางโทรศัพท์
-หน้าที่ของคุณคือเตือนผู้ใช้อย่างจริงจังและให้คำแนะนำที่ปฏิบัติได้จริง
-ตอบเป็นภาษาไทย ใช้ภาษาที่เข้าใจง่าย"""),
-            ("user", """⚠️ ตรวจพบพฤติกรรมหลอกลวงหลายครั้ง!
+            หน้าที่ของคุณคือเตือนผู้ใช้อย่างจริงจังและให้คำแนะนำที่ปฏิบัติได้จริง
+            ตอบเป็นภาษาไทย ใช้ภาษาที่เข้าใจง่าย"""),
+                        ("user", """⚠️ ตรวจพบพฤติกรรมหลอกลวงหลายครั้ง!
 
-ข้อความที่น่าสงสัย:
-{scam_messages}
+            ข้อความที่น่าสงสัย:
+            {scam_messages}
 
-กรุณา:
-1. เตือนผู้ใช้ว่านี่คือสายมิจฉาชีพ (1-2 ประโยค)
-2. ระบุเทคนิคหลอกลวงที่ใช้ (bullet points สั้นๆ)
-3. ให้คำแนะนำว่าควรทำอย่างไร (3-4 ข้อ)
+            กรุณา:
+            1. เตือนผู้ใช้ว่านี่คือสายมิจฉาชีพ (1-2 ประโยค)
+            2. ระบุเทคนิคหลอกลวงที่ใช้ (bullet points สั้นๆ)
+            3. ให้คำแนะนำว่าควรทำอย่างไร (3-4 ข้อ)
 
-ตอบ:""")
+            ตอบ:""")
         ])
     
     def reset_state(self):
@@ -360,7 +313,7 @@ class HybridPipeline:
                 yield {
                     "type": "log",
                     "step": "BERT",
-                    "message": f"📝 New: \"{short_text}\"",
+                    "message": f"New: \"{short_text}\"",
                     "timestamp": time.time()
                 }
                 
@@ -369,25 +322,24 @@ class HybridPipeline:
                     yield {
                         "type": "log",
                         "step": "BERT",
-                        "message": f"⚠️ History: {len(self.suspicious_memory)} suspicious",
+                        "message": f"History: {len(self.suspicious_memory)} suspicious",
                         "timestamp": time.time()
                     }
                 if self.recent_memory:
                     yield {
                         "type": "log",
                         "step": "BERT",
-                        "message": f"💬 Context: {len(self.recent_memory)} recent msgs",
+                        "message": f"Context: {len(self.recent_memory)} recent msgs",
                         "timestamp": time.time()
                     }
                 
                 status, confidence, context = self.detect_scam(text)
                 
                 # Show results
-                status_emoji = "🚨" if status == "SCAM" else ("⚠️" if status == "WAIT" else "✅")
                 yield {
                     "type": "log",
                     "step": "BERT",
-                    "message": f"{status_emoji} {status} ({confidence:.0%})",
+                    "message": f"[{status}] ({confidence:.0%})",
                     "timestamp": time.time()
                 }
                 
@@ -405,7 +357,7 @@ class HybridPipeline:
                     yield {
                         "type": "log",
                         "step": "BERT",
-                        "message": f"🔴 SCAM #{self.scam_count}/3",
+                        "message": f"SCAM #{self.scam_count}/3",
                         "timestamp": time.time()
                     }
                     
