@@ -13,8 +13,8 @@ HF_TOKEN = os.getenv("HF_TOKEN", "")
 _c_caller = r"C:\2Year\KBTGHack\wangchan_finetuned_model2_freeze2\wangchan_finetuned_model2_freeze2\checkpoint-350"
 _c_scam = r"C:\2Year\KBTGHack\scam_detector_model\checkpoint-1930_best"
 
-DEFAULT_CALLER_PATH = _c_caller if os.path.exists(_c_caller) else r"D:\KBTG_cybersec\checkpoint-350"
-DEFAULT_SCAM_PATH = _c_scam if os.path.exists(_c_scam) else r"D:\KBTG_cybersec\model"
+DEFAULT_CALLER_PATH = _c_caller if os.path.exists(_c_caller) else r"D:\DriveD\KBTG_cybersec\checkpoint-350"
+DEFAULT_SCAM_PATH = _c_scam if os.path.exists(_c_scam) else r"D:\DriveD\KBTG_cybersec\model"
 
 MODEL_PATHS = {
     "CALLER_IDENTIFIER": os.getenv("CALLER_IDENTIFIER_PATH", DEFAULT_CALLER_PATH),

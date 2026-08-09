@@ -36,7 +36,7 @@ Large LLMs are powerful but impractical for real-time on-device detection. Our h
 
 ## Prerequisites
 
-- Python 3.9+
+- Python 3.12
 - GPU with CUDA support (for Production mode)
 - [Ollama](https://ollama.ai/) (for SLM)
 
@@ -73,9 +73,15 @@ scam-call-detector/
 ### 1. Install Dependencies
 ```bash
 pip install -r requirements.txt
+pip uninstall torchcodec -y
 ```
 
-### 2. Set Environment Variables
+### 2. Setup Local LLM (Ollama)
+```bash
+ollama pull qwen3:1.7b
+```
+
+### 3. Set Environment Variables
 ```bash
 # Create .env file from template
 cp .env.example .env
@@ -86,15 +92,15 @@ cp .env.example .env
 # - SCAM_DETECTOR_PATH: Path to scam detector model
 ```
 
-### 3. Prepare Audio Files
+### 4. Prepare Audio Files
 - Place audio files (`.wav`) in the `static/audio/` folder
 
-### 4. Configure Settings
+### 5. Configure Settings
 Set via environment variables or edit `app/config.py`:
-- `USE_MOCK_AI=true` for Demo Mode (no real model loading)
-- `USE_MOCK_AI=false` for Production (requires GPU and models)
+- `PITCH_ONLY=true` for Demo Mode (no real model loading)
+- `PITCH_ONLY=false` for Production (requires GPU and models)
 
-### 5. Run the Server
+### 6. Run the Server
 ```bash
 # Windows
 run_demo.bat
@@ -103,7 +109,7 @@ run_demo.bat
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 6. Open in Browser
+### 7. Open in Browser
 Navigate to `http://localhost:8000`
 
 ## Features

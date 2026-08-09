@@ -4,8 +4,8 @@ import numpy as np
 import time
 import os
 import logging
-from langchain_core.prompts import PromptTemplate
-from app.config import SAMPLE_RATE, DEVICE, HF_TOKEN
+from langchain_core.prompts import ChatPromptTemplate
+from app.config import SAMPLE_RATE
 from app.models import get_models
 
 logger = logging.getLogger("scam_detector.pipeline")
@@ -19,7 +19,6 @@ class HybridPipeline:
         self.scam_classifier = self.models.scam_classifier
         self.explainer_slm = self.models.explainer_slm
 
-        self._setup_prompts()
         self.reset_state()
         self.diarization_cache = {}
         

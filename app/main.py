@@ -4,8 +4,6 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
 from starlette.concurrency import run_in_threadpool, iterate_in_threadpool
 from pydantic import BaseModel
-import asyncio
-import os
 
 app = FastAPI()
 
