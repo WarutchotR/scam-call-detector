@@ -189,14 +189,29 @@ class HybridPipeline:
         full_context += text
         
         result = self.scam_classifier(full_context)[0]
-        score = result['score']
+        score = float(result['score'])
         label = result['label']
         
-        pred_class = "SCAM" if label in ["SCAM", "LABEL_1"] else "SAFE"
+        scam_keywords = [
+            "โอน", "อายัด", "บัญชี", "ตำรวจ", "สรรพากร", "รางวัล", "คดี", "มิจฉาชีพ",
+            "เลขบัตร", "รหัส", "otp", "ถูกระงับ", "แอบอ้าง", "ฟอกเงิน", "ธนาคาร", "ค่าธรรมเนียม",
+            "โอนเงิน", "กด 9", "ด่วน", "จับกุม", "หมายศาล", "ศาล", "ความลับ", "ผู้โชคดี"
+        ]
         
-        if score < 0.6:
+        has_scam_kw = any(kw in full_context.lower() for kw in scam_keywords)
+        
+        if label == "SCAM":
+            pred_class = "SCAM"
+        elif label == "SAFE":
+            pred_class = "SAFE"
+        else:
+            # Base model fallback (LABEL_0 / LABEL_1 uncalibrated)
+            pred_class = "SCAM" if has_scam_kw else "SAFE"
+            score = 0.88 if has_scam_kw else 0.95
+        
+        if pred_class == "SAFE":
             status = "SAFE"
-        elif score < 0.75:
+        elif score < 0.70:
             status = "WAIT"
         else:
             status = pred_class

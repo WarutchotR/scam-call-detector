@@ -60,14 +60,8 @@ async def check_text(request: TextCheckRequest):
         
         pipeline = get_hybrid_pipeline()
         
-        # Run BERT classification (use pre-loaded models)
-        result = pipeline.scam_classifier(request.text)[0]
-        score = result['score']
-        label = result['label']
-        
-        # Determine status
-        pred_class = "SCAM" if label in ["SCAM", "LABEL_1"] else "SAFE"
-        final_status = "WAIT" if score < 0.7 else pred_class
+        # Run scam detection using unified pipeline logic
+        final_status, score, _ = pipeline.detect_scam(request.text)
         
         # If SCAM, get explanation from SLM
         reason = None
