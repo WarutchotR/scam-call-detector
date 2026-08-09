@@ -54,9 +54,6 @@ class AIModels:
             model="biodatlab/distill-whisper-th-small",
             device=device_id
         )
-        self.asr.model.config.forced_decoder_ids = self.asr.tokenizer.get_decoder_prompt_ids(
-            language="th", task="transcribe"
-        )
 
     def _load_caller_identifier(self) -> None:
         path = MODEL_PATHS["CALLER_IDENTIFIER"]

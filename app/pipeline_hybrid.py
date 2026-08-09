@@ -10,6 +10,24 @@ from app.models import get_models
 
 logger = logging.getLogger("scam_detector.pipeline")
 
+def _merge_segments(raw_segments, min_duration=2.5):
+    if not raw_segments:
+        return []
+    merged = []
+    curr = None
+    for seg in raw_segments:
+        if curr is None:
+            curr = dict(seg)
+            continue
+        if seg["speaker"] == curr["speaker"] or (curr["end"] - curr["start"]) < min_duration:
+            curr["end"] = max(curr["end"], seg["end"])
+        else:
+            merged.append(curr)
+            curr = dict(seg)
+    if curr:
+        merged.append(curr)
+    return merged
+
 class HybridPipeline:
     def __init__(self) -> None:
         self.models = get_models()
@@ -119,19 +137,21 @@ class HybridPipeline:
             return []
         
         # Create segments list
-        segments = []
+        raw_segments = []
         for turn, _, speaker in annotation.itertracks(yield_label=True):
-            segments.append({
+            raw_segments.append({
                 "start": turn.start,
                 "end": turn.end,
                 "speaker": speaker
             })
         
+        segments = _merge_segments(raw_segments, min_duration=2.5)
+        
         # Cache it
         self.diarization_cache[cache_key] = segments
         
         elapsed = time.time() - start_time
-        print(f"   Diarization complete: {len(segments)} segments in {elapsed:.1f}s")
+        print(f"   Diarization complete: {len(segments)} merged segments in {elapsed:.1f}s")
         
         return segments
     
@@ -147,8 +167,9 @@ class HybridPipeline:
         }
             
         generate_kwargs = {
+            "language": "th",
+            "task": "transcribe",
             "max_new_tokens": 128,
-            "no_repeat_ngram_size": 3,
             "condition_on_prev_tokens": False,
             "temperature": 0.0
         }
