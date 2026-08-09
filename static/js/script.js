@@ -79,10 +79,11 @@ function connectWebSocket() {
             return;
         }
 
-        // Handle result data - push to buffer
+        // Handle result data - push to buffer and display immediately
         if (data.type === 'result' || data.text) {
             data._id = transcriptBuffer.length;
             transcriptBuffer.push(data);
+            processResultItem(data);
         }
     };
 
@@ -193,40 +194,46 @@ function startPlayback() {
 }
 
 // ==========================================
-// Transcription Sync
+// Transcription Processing
 // ==========================================
+function processResultItem(item) {
+    if (!item || displayedIds.has(item._id)) return;
+    displayedIds.add(item._id);
+
+    // Remove placeholder icon if present
+    const placeholder = transcriptionBox.querySelector('.transcription-placeholder');
+    if (placeholder) placeholder.remove();
+
+    // If WARNING from SCAM 3 times -> Show Modal
+    if (item.status === 'WARNING' && item.is_warning) {
+        showFullWarning(item.reason);
+        return;
+    }
+
+    addTranscription(item);
+
+    // Update stats
+    segmentsProcessed++;
+    if (segmentsCount) segmentsCount.textContent = segmentsProcessed;
+
+    // Caller identification
+    if (!callerIdentified && segmentsProcessed >= 2 && item.role === 'CALLER') {
+        identifyCaller(item.speaker);
+    }
+
+    // Scam detection
+    if (item.status === 'SCAM') {
+        showScamAlert(item);
+    } else if (item.status === 'WAIT') {
+        updateStatus('warning', `Monitoring... (${Math.round((item.confidence || 0.5) * 100)}%)`);
+    } else if (item.role === 'CALLER' && item.status === 'SAFE') {
+        updateStatus('safe', `Safe (${Math.round((item.confidence || 0.5) * 100)}%)`);
+    }
+}
+
 function syncTranscriptions(currentTime) {
     transcriptBuffer.forEach(item => {
-        // Display when audio reaches the end time of each segment
-        if (currentTime >= item.end && !displayedIds.has(item._id)) {
-            displayedIds.add(item._id);
-
-            // If WARNING from SCAM 3 times -> Show Modal
-            if (item.status === 'WARNING' && item.is_warning) {
-                showFullWarning(item.reason);
-                return;
-            }
-
-            addTranscription(item);
-
-            // Update stats
-            segmentsProcessed++;
-            segmentsCount.textContent = segmentsProcessed;
-
-            // Caller identification
-            if (!callerIdentified && segmentsProcessed >= 2 && item.role === 'CALLER') {
-                identifyCaller(item.speaker);
-            }
-
-            // Scam detection
-            if (item.status === 'SCAM') {
-                showScamAlert(item);
-            } else if (item.status === 'WAIT') {
-                updateStatus('warning', `Monitoring... (${Math.round((item.confidence || 0.5) * 100)}%)`);
-            } else if (item.role === 'CALLER' && item.status === 'SAFE') {
-                updateStatus('safe', `Safe (${Math.round((item.confidence || 0.5) * 100)}%)`);
-            }
-        }
+        processResultItem(item);
     });
 }
 
