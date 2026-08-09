@@ -44,12 +44,12 @@ async def startup_event():
 @app.get("/", response_class=HTMLResponse)
 async def read_pitch(request: Request):
     """Landing page for pitching and presentation"""
-    return templates.TemplateResponse("pitch.html", {"request": request})
+    return templates.TemplateResponse(name="pitch.html", request=request)
 
 @app.get("/demo", response_class=HTMLResponse)
 async def read_demo(request: Request):
     """Interactive demo page"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(name="index.html", request=request)
 
 # Text Check API (using pre-loaded pipeline)
 @app.post("/api/check-text")

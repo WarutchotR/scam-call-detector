@@ -4,7 +4,7 @@ import numpy as np
 import time
 import os
 import logging
-from langchain_core.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
 from app.config import SAMPLE_RATE, DEVICE, HF_TOKEN
 from app.models import get_models
 
@@ -41,6 +41,13 @@ class HybridPipeline:
             ตอบ:""")
         ])
     
+    def _setup_prompts(self):
+        """Initialize LLM prompt templates"""
+        self.explain_prompt = ChatPromptTemplate.from_messages([
+            ("system", "คุณคือระบบวิเคราะห์มิจฉาชีพทางโทรศัพท์ ให้คำอธิบายสั้นๆ ภาษาไทยว่าข้อความนี้มีลักษณะหลอกลวงอย่างไร"),
+            ("user", "ข้อความ: {context}\nอธิบายความเสี่ยง 1-2 ประโยค:")
+        ])
+
     def reset_state(self):
         """Reset state for new session"""
         self.recent_memory = []
@@ -71,6 +78,25 @@ class HybridPipeline:
         audio_input = {"waveform": torch.from_numpy(y).float(), "sample_rate": sr}
         
         # Run Diarization
+        if self.diarization is None:
+            print("   Pyannote model not available, using fallback diarization segments...")
+            duration = librosa.get_duration(y=y, sr=sr)
+            segments = []
+            chunk_len = 5.0
+            cur = 0.0
+            spk_idx = 0
+            while cur < duration:
+                end_t = min(cur + chunk_len, duration)
+                segments.append({
+                    "start": cur,
+                    "end": end_t,
+                    "speaker": f"SPEAKER_{spk_idx % 2:02d}"
+                })
+                cur = end_t
+                spk_idx += 1
+            self.diarization_cache[cache_key] = segments
+            return segments
+            
         diarization_output = self.diarization(audio_input, num_speakers=2)
         
         # Extract annotation

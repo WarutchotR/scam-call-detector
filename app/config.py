@@ -1,10 +1,11 @@
 import os
+import torch
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Basic App Configuration
-DEVICE = os.getenv("DEVICE", "cuda")
+DEVICE = "cuda" if torch.cuda.is_available() and os.getenv("DEVICE", "cuda") == "cuda" else "cpu"
 PITCH_ONLY = os.getenv("PITCH_ONLY", "false").lower() == "true"
 SAMPLE_RATE = 16000
 HF_TOKEN = os.getenv("HF_TOKEN", "")
